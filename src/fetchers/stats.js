@@ -159,6 +159,26 @@ const statsFetcher = async ({
 };
 
 /**
+ * Check if the fetch adapter is available and supported.
+ * Returns true if the fetch adapter can be used, false otherwise.
+ *
+ * @returns {boolean} Whether the fetch adapter is supported.
+ */
+const isFetchAdapterSupported = () => {
+  // In test environments, use the default adapter for compatibility with axios-mock-adapter
+  if (process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID) {
+    return false;
+  }
+
+  // Check if global fetch is available (Node.js 18+ or browser environment)
+  return (
+    typeof globalThis.fetch === "function" &&
+    typeof globalThis.Request === "function" &&
+    typeof globalThis.Response === "function"
+  );
+};
+
+/**
  * Fetch total commits using the REST API.
  *
  * @param {object} variables Fetcher variables.
@@ -168,7 +188,8 @@ const statsFetcher = async ({
  * @see https://developer.github.com/v3/search/#search-commits
  */
 const fetchTotalCommits = (variables, token) => {
-  return axios({
+  /** @type {import('axios').AxiosRequestConfig} */
+  const config = {
     method: "get",
     url: `https://api.github.com/search/commits?q=author:${variables.login}`,
     headers: {
@@ -176,7 +197,15 @@ const fetchTotalCommits = (variables, token) => {
       Accept: "application/vnd.github.cloak-preview",
       Authorization: `token ${token}`,
     },
-  });
+  };
+
+  // Use fetch adapter in production to avoid url.parse() deprecation warning
+  // from follow-redirects (a transitive dependency of axios's http adapter).
+  if (isFetchAdapterSupported()) {
+    config.adapter = "fetch";
+  }
+
+  return axios(config);
 };
 
 /**
