@@ -6,6 +6,10 @@ import axios from "axios";
  * Check if the fetch adapter is available and supported.
  * Returns true if the fetch adapter can be used, false otherwise.
  *
+ * Use the fetch adapter in production to avoid url.parse() deprecation warning
+ * from follow-redirects (a transitive dependency of axios's http adapter).
+ * Skip in test environments for compatibility with axios-mock-adapter.
+ *
  * @returns {boolean} Whether the fetch adapter is supported.
  */
 const isFetchAdapterSupported = () => {
@@ -47,4 +51,4 @@ const request = (data, headers) => {
   return axios(config);
 };
 
-export { request };
+export { request, isFetchAdapterSupported };

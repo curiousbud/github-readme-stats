@@ -2,26 +2,7 @@
 
 import axios from "axios";
 import { CustomError, MissingParamError } from "../common/error.js";
-
-/**
- * Check if the fetch adapter is available and supported.
- * Returns true if the fetch adapter can be used, false otherwise.
- *
- * @returns {boolean} Whether the fetch adapter is supported.
- */
-const isFetchAdapterSupported = () => {
-  // In test environments, use the default adapter for compatibility with axios-mock-adapter
-  if (process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID) {
-    return false;
-  }
-
-  // Check if global fetch is available (Node.js 18+ or browser environment)
-  return (
-    typeof globalThis.fetch === "function" &&
-    typeof globalThis.Request === "function" &&
-    typeof globalThis.Response === "function"
-  );
-};
+import { isFetchAdapterSupported } from "../common/http.js";
 
 /**
  * WakaTime data fetcher.
