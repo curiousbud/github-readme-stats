@@ -9,7 +9,7 @@ import { logger } from "../common/log.js";
 import { excludeRepositories } from "../common/envs.js";
 import { CustomError, MissingParamError } from "../common/error.js";
 import { wrapTextMultiline } from "../common/fmt.js";
-import { request } from "../common/http.js";
+import { request, isFetchAdapterSupported } from "../common/http.js";
 
 dotenv.config();
 
@@ -168,7 +168,8 @@ const statsFetcher = async ({
  * @see https://developer.github.com/v3/search/#search-commits
  */
 const fetchTotalCommits = (variables, token) => {
-  return axios({
+  /** @type {import('axios').AxiosRequestConfig} */
+  const config = {
     method: "get",
     url: `https://api.github.com/search/commits?q=author:${variables.login}`,
     headers: {
@@ -176,7 +177,15 @@ const fetchTotalCommits = (variables, token) => {
       Accept: "application/vnd.github.cloak-preview",
       Authorization: `token ${token}`,
     },
-  });
+  };
+
+  // Use fetch adapter in production to avoid url.parse() deprecation warning
+  // from follow-redirects (a transitive dependency of axios's http adapter).
+  if (isFetchAdapterSupported()) {
+    config.adapter = "fetch";
+  }
+
+  return axios(config);
 };
 
 /**

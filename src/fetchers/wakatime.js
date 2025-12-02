@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { CustomError, MissingParamError } from "../common/error.js";
+import { isFetchAdapterSupported } from "../common/http.js";
 
 /**
  * WakaTime data fetcher.
@@ -15,10 +16,20 @@ const fetchWakatimeStats = async ({ username, api_domain }) => {
   }
 
   try {
+    /** @type {import('axios').AxiosRequestConfig} */
+    const config = {};
+
+    // Use fetch adapter in production to avoid url.parse() deprecation warning
+    // from follow-redirects (a transitive dependency of axios's http adapter).
+    if (isFetchAdapterSupported()) {
+      config.adapter = "fetch";
+    }
+
     const { data } = await axios.get(
       `https://${
         api_domain ? api_domain.replace(/\/$/gi, "") : "wakatime.com"
       }/api/v1/users/${username}/stats?is_including_today=true`,
+      config,
     );
 
     return data.data;
